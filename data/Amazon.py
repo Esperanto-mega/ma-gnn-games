@@ -1,5 +1,32 @@
+import pickle
 import numpy as np
 from data.Dataset import DataSet
+
+class Baseline(Dataset):
+    def __init__(self, dataset):
+        num_users = {
+            'Instruments': 24772,
+            'Games': 50546,
+            'Arts': 45141
+        }
+
+        num_items = {
+            'Instruments': 9922,
+            'Games': 16859,
+            'Arts': 20956
+        }
+        
+        self.user_record_file = f'/datain/v-yinju/rqvae-zzx/data/MA-GNN/{dataset}/user_records.txt'
+        self.num_users, self.num_items = num_users[dataset], num_items[dataset]
+
+    def generate_dataset(self, index_shift = 1):
+        user_records = pickle.load(open(self.user_record_file, 'rb'))
+
+        user_records = self.data_index_shift(user_records, increase_by = index_shift)
+        train_val_set, test_set = self.split_data_sequentially(user_records, test_radio = 0.2)
+        train_set, val_set = self.split_data_sequentially(train_val_set, test_radio = 0.1)
+
+        return train_set, val_set, train_val_set, test_set, self.num_users, self.num_items + index_shift
 
 
 # Amazon review dataset
