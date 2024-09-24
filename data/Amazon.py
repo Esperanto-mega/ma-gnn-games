@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 from data.Dataset import DataSet
 
-class Baseline(Dataset):
+class Baseline(DataSet):
     def __init__(self, dataset):
         num_users = {
             'Instruments': 24772,
