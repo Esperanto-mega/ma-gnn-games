@@ -294,8 +294,8 @@ if __name__ == '__main__':
     config = parser.parse_args()
 
     from data import Amazon
-    from data import GoodReads
-    from data import MovieLens
+    # from data import GoodReads
+    # from data import MovieLens
 
     if config.dataset == 'CDs':
         data_set = Amazon.CDs()
