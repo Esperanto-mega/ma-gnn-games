@@ -198,8 +198,7 @@ def train_model(train_data, test_data, config):
                                               config.sets_of_neg_samples]
             batch_neg = negatives_np[batch_users]
 
-            gnn_np = torch.Tensor(
-                get_slice(batch_sequences, False)).float().to(device)
+            gnn_np = torch.Tensor(get_slice(batch_sequences, False)).float().to(device)
 
             batch_users = torch.from_numpy(batch_users).type(
                 torch.LongTensor).to(device)
@@ -248,7 +247,7 @@ def train_model(train_data, test_data, config):
         recall, ndcg = evaluation(magnn, train_data, test_data, topk = 10)
         # precision, recall, MAP, ndcg = evaluation(magnn, train_data, test_data, topk=20)
 
-        print('recall:', recall, 'NDCG:', NDCG)
+        print('Recall:', recall, 'NDCG:', NDCG)
 
         if (epoch_num + 1) % 20 == 0:
             # magnn.eval()
@@ -268,7 +267,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # data arguments
-    parser.add_argument('--L', type=int, default = 4)
+    parser.add_argument('--L', type=int, default = 6)
     parser.add_argument('--T', type=int, default = 1)
 
     # train arguments
@@ -289,7 +288,7 @@ if __name__ == '__main__':
                         help='Instruments/Games/Arts')
 
     # model dependent arguments
-    parser.add_argument('--d', type=int, default=50,
+    parser.add_argument('--d', type=int, default=128,
                         help='item embedding size')
     # parser.add_argument('--d2', type=int, default=128,
     #                     help='user embedding size')
