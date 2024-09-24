@@ -8,12 +8,7 @@ from time import time
 import datetime
 import torch
 
-logging.basicConfig(level=logging.DEBUG,
-                    filename='magnn-test.log', filemode='a')
-logger = logging.getLogger(__name__)
-
-device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
-
+device = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 def evaluation(magnn, train, test_set, topk=20):
     num_users = train.num_users
@@ -80,13 +75,15 @@ def evaluation(magnn, train, test_set, topk=20):
             pred_list = np.append(pred_list, batch_pred_list, axis=0)
 
     precision, recall, MAP, ndcg = [], [], [], []
-    for k in [5, 10, 15, 20]:
-        precision.append(precision_at_k(test_set, pred_list, k))
+    # for k in [5, 10, 15, 20]:
+    for k in [1, 5, 10]:
+        # precision.append(precision_at_k(test_set, pred_list, k))
         recall.append(recall_at_k(test_set, pred_list, k))
-        MAP.append(mapk(test_set, pred_list, k))
+        # MAP.append(mapk(test_set, pred_list, k))
         ndcg.append(ndcg_k(test_set, pred_list, k))
 
-    return precision, recall, MAP, ndcg
+    # return precision, recall, MAP, ndcg
+    return recall, ndcg
 
 
 def negsamp_vectorized_bsearch_preverif(pos_inds, n_items, n_samp=32):
@@ -228,12 +225,16 @@ def train_model(train_data, test_data, config):
                                             negatives_prediction) + 1e-8)
             loss = torch.mean(torch.sum(loss))
 
+            print('batch_loss:', loss)
+            
             epoch_loss += loss.item()
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
         epoch_loss /= num_batches
+
+        print('epoch_loss:', epoch_loss)
 
         t2 = time()
 
@@ -244,16 +245,18 @@ def train_model(train_data, test_data, config):
         # with torch.no_grad():
         # 输出评价指标
         magnn.eval()
-        precision, recall, MAP, ndcg = evaluation(
-            magnn, train_data, test_data, topk=20)
+        recall, ndcg = evaluation(magnn, train_data, test_data, topk = 10)
+        # precision, recall, MAP, ndcg = evaluation(magnn, train_data, test_data, topk=20)
+
+        print('recall:', recall, 'NDCG:', NDCG)
 
         if (epoch_num + 1) % 20 == 0:
             # magnn.eval()
             # precision, recall, MAP, ndcg = evaluation(
             #     magnn, train_data, test_data, topk=20)
-            logger.info(', '.join(str(e) for e in precision))
+            # logger.info(', '.join(str(e) for e in precision))
             logger.info(', '.join(str(e) for e in recall))
-            logger.info(', '.join(str(e) for e in MAP))
+            # logger.info(', '.join(str(e) for e in MAP))
             logger.info(', '.join(str(e) for e in ndcg))
             logger.info("Evaluation time:{}".format(time() - t2))
 
@@ -265,12 +268,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # data arguments
-    parser.add_argument('--L', type=int, default=6)
-    parser.add_argument('--T', type=int, default=2)
+    parser.add_argument('--L', type=int, default = 4)
+    parser.add_argument('--T', type=int, default = 1)
 
     # train arguments
-    parser.add_argument('--n_iter', type=int, default=200)
-    parser.add_argument('--seed', type=int, default=2020)
+    parser.add_argument('--n_iter', type=int, default = 30)
+    parser.add_argument('--seed', type=int, default = 2020)
     parser.add_argument('--batch_size', type=int, default=4096)
     parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--l2', type=float, default=1e-3)
@@ -282,8 +285,8 @@ if __name__ == '__main__':
                         help='number of dimensions in attention')
     parser.add_argument('--m', type=int, default=20,
                         help='number of memory units')
-    parser.add_argument('--dataset', default='CDs',
-                        help='the datasets of model')
+    parser.add_argument('--dataset', default = 'Instruments',
+                        help='Instruments/Games/Arts')
 
     # model dependent arguments
     parser.add_argument('--d', type=int, default=50,
@@ -293,24 +296,29 @@ if __name__ == '__main__':
 
     config = parser.parse_args()
 
-    from data import Amazon
+    logging.basicConfig(level = logging.DEBUG, filename = f'/datain/v-yinju/rqvae-zzx/data/MA-GNN/{config.dataset}/test.log', filemode = 'a')
+    logger = logging.getLogger(__name__)
+
+    from data.Amazon import Baseline
     # from data import GoodReads
     # from data import MovieLens
 
-    if config.dataset == 'CDs':
-        data_set = Amazon.CDs()
-    elif config.dataset == 'Books':
-        data_set = Amazon.Books()
-    elif config.dataset == 'Comics':
-        data_set = GoodReads.Comics()
-    elif config.dataset == 'Children':
-        data_set = GoodReads.Children()
-    else:
-        data_set = MovieLens.ML20M()
+    data_set = Baseline(config.dataset)
+    
+    # if config.dataset == 'CDs':
+    #     data_set = Amazon.CDs()
+    # elif config.dataset == 'Books':
+    #     data_set = Amazon.Books()
+    # elif config.dataset == 'Comics':
+    #     data_set = GoodReads.Comics()
+    # elif config.dataset == 'Children':
+    #     data_set = GoodReads.Children()
+    # else:
+    #     data_set = MovieLens.ML20M()
 
     # item_id=0 for sequence padding
-    config.dataset = 'CDs'
-    data_set = Amazon.CDs()
+    # config.dataset = 'CDs'
+    # data_set = Amazon.CDs()
     train_set, val_set, train_val_set, test_set, num_users, num_items = data_set.generate_dataset(
         index_shift=1)
     train = Interactions(train_val_set, num_users, num_items)
