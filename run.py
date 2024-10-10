@@ -54,9 +54,13 @@ def evaluation(magnn, train, test_set, topk=20):
             np.array(batch_user_index)).type(torch.LongTensor).to(device)
 
         # 测试的时候这个地方内存过大报错
+        import time
         with torch.no_grad():
+            start = time.time()
             rating_pred = magnn(batch_test_sequences, batch_test_left_sequences,
                                 batch_user_ids, item_ids, gnn_np, True)
+            end = time.time()
+            print('Inference time:', end - start)
         rating_pred = rating_pred.cpu().data.numpy().copy()
         rating_pred[train_matrix[batch_user_index].toarray() > 0] = 0
 
