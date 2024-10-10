@@ -251,7 +251,7 @@ def train_model(train_data, test_data, config):
         recall, ndcg = evaluation(magnn, train_data, test_data, topk = 10)
         # precision, recall, MAP, ndcg = evaluation(magnn, train_data, test_data, topk=20)
 
-        print('Recall:', recall, 'NDCG:', NDCG)
+        print('Recall:', recall, 'NDCG:', ndcg)
 
         if (epoch_num + 1) % 20 == 0:
             # magnn.eval()
